@@ -172,9 +172,10 @@ function card(r) {
     const t = document.createElement("button"); t.type = "button"; t.className = "thumb"; t.setAttribute("aria-label", "ดูรูปเต็ม " + r.plate);
     const img = document.createElement("img"); img.loading = "lazy"; img.alt = "รูปป้าย " + r.plate; img.src = r.photo;
     t.append(img); t.onclick = () => openPhoto(r); el.prepend(t);
-    add(r.photo, "เปิดรูปแท็บใหม่");
+    const v = document.createElement("a"); v.href = r.photo; v.textContent = "กดดูรูปใหญ่";
+    v.onclick = e => { e.preventDefault(); openPhoto(r); }; links.append(v);
   }
-  if (safeUrl(r.post)) add(r.post, "โพสต์ต้นทาง");
+  if (safeUrl(r.post)) add(r.post, "โพสต์ต้นทางที่พบเจอ");
   return el;
 }
 </script>
