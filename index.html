@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ตามหาป้ายทะเบียนน้ำท่วม ลาดกระบัง</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;500;600;700&family=Mitr:wght@500;600;700&display=swap">
+<style>
+:root{
+  --bg:#eef3f2; --surface:#ffffff; --fg:#17262a; --muted:#5a6d70; --line:#cbd8d6;
+  --accent:#0e6e78; --accent-fg:#ffffff; --plate:#ffffff; --plate-ink:#111;
+  --warn-bg:#fff4d6; --warn-line:#e0b545;
+  --display:"Mitr","Anuphan",system-ui,sans-serif;
+  --body:"Anuphan",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1a1c; --surface:#172427; --fg:#e3eceb; --muted:#93a8aa; --line:#2b3d40;
+  --accent:#4fb8c2; --accent-fg:#06272b; --warn-bg:#3a2f12; --warn-line:#8a6d20; --plate:#f2f2ee; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.6}
+.wrap{max-width:760px;margin:0 auto;grid-template-columns:minmax(0,1fr);padding-block:12vh 48px;padding-inline:16px;display:grid;gap:20px}
+.sub{margin:-12px 0 0;text-align:center;color:var(--muted);font-size:.95rem}
+h1{font-family:var(--display);font-size:1.6rem;line-height:1.2;margin:0;text-align:center;text-wrap:balance}
+form{display:flex;flex-direction:column;align-items:center;gap:10px}
+.searchbox{position:relative;width:100%}
+input{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%}
+#q{font-family:var(--display);font-size:1.3rem;letter-spacing:.04em;text-align:center}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button{font:inherit;font-weight:600;border:0;border-radius:8px;padding:10px 18px;background:var(--accent);color:var(--accent-fg);cursor:pointer}
+#go{min-width:160px}
+#sug{position:absolute;left:0;right:0;top:calc(100% + 4px);margin:0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;z-index:5;box-shadow:0 6px 18px rgb(0 0 0 / .12)}
+#sug button{width:100%;background:transparent;color:var(--fg);text-align:left;padding:8px 10px;border-radius:6px;display:flex;justify-content:space-between;gap:8px}
+#sug button:hover{background:var(--bg)}
+#sug b{font-family:var(--display);letter-spacing:.03em}
+#sug small,.meta{color:var(--muted)}
+.tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.tabs button{background:var(--surface);color:var(--fg);border:1px solid var(--line);padding:6px 12px;font-weight:500;display:flex;align-items:center;gap:6px}
+.tabs button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.tabs i{width:12px;height:12px;border-radius:3px;border:1px solid #555}
+.plate.green b{color:#0b7a3b}
+.plate.blue b{color:#1f4fb5}
+.plate.yellow{background:#f2c320}
+.plate.red{background:#d8352a}
+.warn{margin:0;padding:12px 14px;border-radius:10px;background:var(--warn-bg);border:1px solid var(--warn-line);color:var(--fg);font-size:.95rem;line-height:1.5}
+.warn b{display:block;font-family:var(--display);font-weight:600}
+.meta{font-size:.9rem;margin:0;text-align:center}
+.wrap > :not(.results){width:100%;max-width:440px;justify-self:center}
+.results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}
+@media (min-width:640px){.results{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.results .empty{grid-column:1/-1}
+.hit{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;display:grid;gap:8px;font-size:.85rem;line-height:1.45}
+.plate{justify-self:stretch;background:var(--plate);color:var(--plate-ink);border:2px solid #222;border-radius:6px;padding:4px 12px;text-align:center;min-width:120px}
+.plate b{display:block;font-family:var(--display);font-size:1.3rem;line-height:1.2;white-space:nowrap}
+.plate small{display:block;font-size:.75rem;border-top:1px solid #999}
+.info{display:grid;gap:4px;overflow-wrap:anywhere}
+.info a{color:var(--accent);font-weight:600}
+.links{display:flex;flex-wrap:wrap;gap:4px 12px}
+.note{color:var(--muted);font-size:.8rem}
+.thumb{display:block;padding:0;border:0;border-radius:6px;overflow:hidden;background:var(--bg);cursor:zoom-in}
+.thumb img{display:block;width:100%;height:110px;object-fit:cover}
+#viewer{padding:0;border:0;background:transparent;max-width:100vw;max-height:100vh;width:100vw;height:100vh}
+#viewer::backdrop{background:rgb(0 0 0 / .85)}
+#viewer .box{width:100%;height:100%;overflow:auto;display:grid;place-items:center;padding:56px 8px 16px}
+#viewer img{max-width:100%;height:auto;border-radius:6px}
+#viewer button{position:fixed;top:10px;right:10px;background:#fff;color:#111}
+.phone span{font-family:var(--display);font-size:1rem}
+.empty{color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:10px;padding:16px;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>ค้นหาป้ายทะเบียนของคุณ</h1>
+  <p class="sub">ป้ายที่เก็บได้ในเขตลาดกระบังและพื้นที่ใกล้เคียง</p>
+  <p class="warn" role="note"><b>⚠️ ข้อมูลอ่านด้วย AI อาจผิดพลาด</b>เลขทะเบียนในเว็บนี้ใช้ AI อ่านจากรูปถ่าย อาจอ่านผิดได้ โปรดดูรูปป้ายจริงให้แน่ใจ และติดต่อสอบถามผู้โพสต์ต้นทางก่อนเดินทางไปรับ</p>
+  <form id="sf" role="search">
+    <div class="searchbox">
+      <input id="q" placeholder="เช่น กข 1234" autocomplete="off" aria-label="เลขทะเบียน">
+      <ul id="sug" hidden></ul>
+    </div>
+    <button id="go">ค้นหา</button>
+  </form>
+  <div class="tabs" id="tabs" aria-label="สีป้าย"></div>
+  <p class="meta" id="count">กำลังโหลดข้อมูล…</p>
+  <div class="results" id="results"></div>
+  <dialog id="viewer" aria-label="รูปป้ายทะเบียน"><button type="button" id="vclose">ปิด ✕</button><div class="box"><img id="vimg" alt=""></div></dialog>
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const norm = s => (s || "").toLowerCase().replace(/[\s\-\.]/g, "");
+const safeUrl = u => /^https?:\/\//i.test(u || "") ? u : "";
+let rows = [];
+
+fetch("plates.json", { cache: "no-store" }).then(r => r.json())
+  .then(d => { rows = d; renderTabs(); search(); })
+  .catch(() => { $("count").textContent = "โหลดข้อมูลไม่สำเร็จ ลองรีเฟรชหน้า"; });
+
+function search(e) {
+  e && e.preventDefault();
+  $("sug").hidden = true;
+  const raw = $("q").value.trim(), q = norm(raw), box = $("results");
+  box.replaceChildren();
+  const list = rows.filter(r => inColor(r) && norm(r.plate).includes(q));
+  $("count").textContent = `พบ ${list.length} ป้าย` + (color ? `สี${color}` : "") + (q ? ` ที่ตรงกับ "${raw}"` : "") + (list.length > 1 ? " — ดูจังหวัดใต้เลขทะเบียนให้ตรงกับป้ายของคุณ" : "");
+  if (!list.length) {
+    const el = document.createElement("div"); el.className = "empty";
+    el.textContent = "ยังไม่พบป้ายนี้ ลองพิมพ์แค่ตัวเลข หรือกลับมาค้นอีกครั้งภายหลัง";
+    return box.append(el);
+  }
+  list.forEach(r => box.append(card(r)));
+}
+$("sf").addEventListener("submit", search);
+
+const COLORS = { "ขาว": ["white", "#fff"], "เขียว": ["green", "#0b7a3b"], "เหลือง": ["yellow", "#f2c320"], "น้ำเงิน": ["blue", "#1f4fb5"], "แดง": ["red", "#d8352a"] };
+let color = "";
+const inColor = r => !color || (r.color || "ขาว") === color;
+function renderTabs() {
+  const box = $("tabs"); box.replaceChildren();
+  for (const c of ["", ...Object.keys(COLORS)]) {
+    const n = rows.filter(r => !c || (r.color || "ขาว") === c).length;
+    if (c && !n) continue;
+    const b = document.createElement("button"); b.type = "button";
+    b.setAttribute("aria-pressed", c === color);
+    if (c) { const i = document.createElement("i"); i.style.background = COLORS[c][1]; b.append(i); }
+    b.append(`${c ? "ป้าย" + c : "ทั้งหมด"} (${n})`);
+    b.onclick = () => { color = c; renderTabs(); search(); };
+    box.append(b);
+  }
+}
+
+$("q").addEventListener("input", () => {
+  const q = norm($("q").value), ul = $("sug"), seen = new Set();
+  ul.replaceChildren();
+  const hits = q.length < 2 ? [] : rows.filter(r => norm(r.plate).includes(q) && inColor(r) && !seen.has(r.plate + r.province) && seen.add(r.plate + r.province)).slice(0, 6);
+  for (const r of hits) {
+    const li = document.createElement("li"), b = document.createElement("button");
+    b.type = "button"; b.innerHTML = "<b></b><small></small>";
+    b.querySelector("b").textContent = r.plate;
+    b.querySelector("small").textContent = r.area || r.province || "";
+    b.onclick = () => { $("q").value = r.plate; search(); };
+    li.append(b); ul.append(li);
+  }
+  ul.hidden = !hits.length;
+});
+document.addEventListener("click", e => { if (!e.target.closest(".searchbox")) $("sug").hidden = true; });
+
+function openPhoto(r) {
+  $("vimg").src = r.photo; $("vimg").alt = "รูปป้าย " + r.plate;
+  $("viewer").showModal();
+}
+$("vclose").onclick = () => $("viewer").close();
+$("viewer").addEventListener("click", e => { if (e.target.id !== "vimg") $("viewer").close(); });
+
+function card(r) {
+  const el = document.createElement("article"); el.className = "hit";
+  el.innerHTML = `<div class="plate ${(COLORS[r.color] || COLORS["ขาว"])[0]}"><b></b><small></small></div><div class="info"><div class="place"></div><div class="finder"></div><div class="phone"></div><div class="note"></div><div class="links"></div><div class="meta when" style="text-align:left"></div></div>`;
+  el.querySelector("b").textContent = r.plate;
+  el.querySelector("small").textContent = r.province || "ไม่ระบุจังหวัด";
+  el.querySelector(".place").textContent = r.place ? "เจอที่: " + r.place + " (" + (r.area || "ลาดกระบัง") + ")" : "ไม่ระบุสถานที่ — ทักผู้โพสต์ต้นทาง";
+  el.querySelector(".finder").textContent = r.finder ? "คนที่เก็บได้: " + r.finder : "";
+  if (r.phone) {
+    const a = document.createElement("a"); a.href = "tel:" + r.phone.replace(/[^\d+]/g, "");
+    a.innerHTML = "โทร <span></span>"; a.querySelector("span").textContent = r.phone;
+    el.querySelector(".phone").append(a);
+  }
+  el.querySelector(".note").textContent = r.note || "";
+  el.querySelector(".when").textContent = r.date ? "ลงเมื่อ " + r.date : "";
+  const links = el.querySelector(".links");
+  const add = (href, text) => { const a = document.createElement("a"); a.href = href; a.target = "_blank"; a.rel = "noopener"; a.textContent = text; links.append(a); };
+  if (r.place || r.lat != null) add("https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(r.lat != null ? `${r.lat},${r.lng}` : `${r.place || ""} ${r.area || "ลาดกระบัง"}`),
+      "แผนที่");
+  if (r.photo) {
+    const t = document.createElement("button"); t.type = "button"; t.className = "thumb"; t.setAttribute("aria-label", "ดูรูปเต็ม " + r.plate);
+    const img = document.createElement("img"); img.loading = "lazy"; img.alt = "รูปป้าย " + r.plate; img.src = r.photo;
+    t.append(img); t.onclick = () => openPhoto(r); el.prepend(t);
+    add(r.photo, "เปิดรูปแท็บใหม่");
+  }
+  if (safeUrl(r.post)) add(r.post, "โพสต์ต้นทาง");
+  return el;
+}
+</script>
+</body>
+</html>
